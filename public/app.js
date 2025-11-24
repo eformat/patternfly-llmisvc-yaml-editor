@@ -1,5 +1,6 @@
 import { parse as parseYaml, stringify as stringifyYaml } from 'https://cdn.jsdelivr.net/npm/yaml@2.5.1/+esm';
 import { MODEL_OPTIONS } from './modelOptions.js';
+import { INFERENCE_SERVICES } from './inferenceServices.js';
 
 function isLLMKind(kind) {
   return typeof kind === 'string' && kind.toLowerCase().includes('llminferenceservice');
@@ -351,13 +352,8 @@ function updateEditorHeight() {
   state.editor.layout();
 }
 
-async function fetchInferenceServices() {
-  const response = await fetch('/api/inference-services');
-  if (!response.ok) {
-    throw new Error(`Unable to load inference services (${response.status})`);
-  }
-
-  state.services = await response.json();
+async function initializeInferenceServices() {
+  state.services = INFERENCE_SERVICES.map((service) => ({ ...service }));
   renderSelect();
 
   if (state.services.length > 0) {
@@ -994,7 +990,7 @@ if (elements.shortcutsToggle && elements.shortcutsPanel) {
 }
 
 initializeMonaco();
-fetchInferenceServices().catch((error) => {
+initializeInferenceServices().catch((error) => {
   console.error(error);
   elements.description.textContent = 'Failed to load InferenceServices.';
 });

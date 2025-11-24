@@ -138,11 +138,45 @@ body::-webkit-scrollbar {
 
 .pf-v6-c-code-editor__header {
   border-bottom: 1px solid var(--pf-t--global--border--color--default, #d2d2d2);
+  background: var(--pf-t--global--background--color--200, #f5f5f5);
+  padding-inline: 0.75rem;
+}
+
+.pf-v6-c-code-editor__header-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.pf-v6-c-code-editor__header-main {
+  flex: 0 1 auto;
+}
+
+.pf-v6-c-code-editor__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: min(100%, 480px);
   background: var(--pf-t--global--background--color--100, #fff);
+  border: 1px solid var(--pf-t--global--border--color--default, #d2d2d2);
+  border-radius: var(--pf-t--global--border--radius--lg, 16px);
+  padding: 0.35rem 0.75rem;
+  box-sizing: border-box;
 }
 
 .pf-v6-c-code-editor__tab-text {
   font-weight: 600;
+}
+
+.editor-controls .pf-v6-c-button {
+  min-height: 38px;
+  padding-inline: 0.9rem;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  line-height: 1;
 }
 
 .pf-v6-c-code-editor__main {
@@ -176,15 +210,30 @@ body::-webkit-scrollbar {
 
 .pf-v6-c-code-editor__controls {
   display: flex;
-  align-items: center;
   gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.editor-controls {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.editor-controls .copy-status {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding-inline: 0.4rem;
 }
 
 #copyButton {
   border-radius: var(--pf-t--global--border--radius--sm, 6px);
-  border: 1px solid var(--pf-t--global--border--color--default, #d2d2d2);
+  border: 1px solid var(--pf-t--global--border--color--default, #c7c7c7);
   background: var(--pf-t--global--background--color--200, #f5f5f5);
-  color: var(--pf-t--global--text--color--regular, #151515);
+  color: var(--pf-t--global--text--color--regular, #1b1d21);
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
@@ -284,6 +333,22 @@ body::-webkit-scrollbar {
 
 .control-line__field {
   flex: 1;
+  min-width: 0;
+}
+
+.form-card .pf-v6-c-form-control {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.form-card .pf-v6-c-number-input {
+  width: 100%;
+  max-width: 100%;
+}
+
+.form-card .pf-v6-c-number-input__field {
+  flex: 1;
 }
 
 .control-description {
@@ -315,6 +380,39 @@ body::-webkit-scrollbar {
   font-size: 0.85rem;
   min-width: 4rem;
   justify-content: center;
+}
+
+.pf-v6-c-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  gap: 0.25rem;
+  background: var(--pf-t--global--background--color--200, #f5f5f5);
+  color: var(--pf-t--global--text--color--regular, #151515);
+}
+
+.pf-v6-c-label.pf-m-purple {
+  background: #e6ddff;
+  color: #3c2f8f;
+}
+
+.pf-v6-c-label.pf-m-green {
+  background: #caefd4;
+  color: #1e542b;
+}
+
+.pf-v6-c-label.pf-m-red {
+  background: #f8d7d4;
+  color: #7a0f0f;
+}
+
+.tool-toggle__option {
+  font-size: 0.95rem;
 }
 
 .shortcuts-trigger {

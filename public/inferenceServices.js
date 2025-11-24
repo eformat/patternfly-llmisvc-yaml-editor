@@ -1,10 +1,4 @@
-const express = require('express');
-const path = require('path');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-const inferenceServices = [
+export const INFERENCE_SERVICES = [
   {
     id: 'isvc-demo',
     label: 'InferenceService',
@@ -64,18 +58,4 @@ metadata:
 `
   }
 ];
-
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(
-  '/patternfly',
-  express.static(path.join(__dirname, 'node_modules', '@patternfly', 'patternfly'))
-);
-
-app.get('/api/inference-services', (_, res) => {
-  res.json(inferenceServices);
-});
-
-app.listen(PORT, () => {
-  console.log(`PatternFly YAML editor listening on http://localhost:${PORT}`);
-});
 
