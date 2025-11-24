@@ -31,7 +31,7 @@ export const MODEL_OPTIONS = [
     uri: 'oci://quay.io/eformat/modelcar-gemma-3n-e4b-it-fp8-dynamic:1.5',
     additionalArgs:
       '--gpu_memory_utilization 0.80 --enable-auto-tool-choice --tool-call-parser pythonic --chat-template /mnt/models/tool_chat_template_gemma3_pythonic.jinja',
-    validated: true
+    validated: false
   },
   {
     id: 'granite-3.1-8b-instruct',
@@ -40,7 +40,7 @@ export const MODEL_OPTIONS = [
     uri: 'oci://registry.redhat.io/rhelai1/modelcar-granite-3-1-8b-instruct:1.5',
     additionalArgs:
       '--max-model-len=25000 --enable-auto-tool-choice --tool-call-parser=granite',
-    validated: false
+    validated: true
   },
   {
     id: 'llama-3.2-3b-instruct',
