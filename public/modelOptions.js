@@ -48,7 +48,7 @@ export const MODEL_OPTIONS = [
     name: 'RedHatAI/llama-3.2-3b-instruct',
     uri: 'oci://quay.io/redhat-ai-services/modelcar-catalog:llama-3.2-3b-instruct',
     additionalArgs:
-      '--enable-auto-tool-choice --tool-call-parser=llama3',
-    validated: false
+      '--max-model-len=110000 --enable-auto-tool-choice --tool-call-parser=llama3_json',
+    validated: true
   }
 ];
