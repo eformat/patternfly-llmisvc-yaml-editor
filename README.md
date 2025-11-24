@@ -10,7 +10,7 @@ npm run dev
 To produce the static build:
 
 ```bash
-npm run build   # outputs to ./build
+npm run build   # outputs to ./build/app
 ```
 
-You can preview the exported site locally with `npm run preview`.
+You can preview the exported site locally with `npm run preview` and open `http://localhost:3000/app`.

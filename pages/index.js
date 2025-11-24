@@ -1,7 +1,11 @@
 import Head from 'next/head';
 import Script from 'next/script';
+import { useRouter } from 'next/router';
 
 export default function Home() {
+  const { basePath } = useRouter();
+  const assetPrefix = basePath ?? '';
+
   return (
     <>
       <Head>
@@ -15,14 +19,14 @@ export default function Home() {
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/@patternfly/patternfly@6.4.0/dist/css/patternfly-addons.css"
         />
-        <link rel="stylesheet" href="/styles.css" />
+        <link rel="stylesheet" href={`${assetPrefix}/styles.css`} />
       </Head>
       <Script
         src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs/loader.min.js"
         strategy="beforeInteractive"
         crossOrigin="anonymous"
       />
-      <Script src="/app.js" strategy="afterInteractive" type="module" />
+      <Script src={`${assetPrefix}/app.js`} strategy="afterInteractive" type="module" />
       <div className="pf-v6-c-page">
         <div className="pf-v6-c-page__main-container">
           <main className="pf-v6-c-page__main themed-shell" tabIndex={-1} role="main">
