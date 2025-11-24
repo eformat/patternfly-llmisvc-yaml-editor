@@ -1,6 +1,6 @@
 # patternfly-llmisvc-yaml-editor
 
-This project is now a static PatternFly demo powered by [Next.js static export](https://nextjs.org/docs/pages/getting-started/deploying#static-export). To work on it locally:
+This project is a static PatternFly demo powered by [Next.js static export](https://nextjs.org/docs/pages/getting-started/deploying#static-export). To work on it locally:
 
 ```bash
 npm install

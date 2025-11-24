@@ -317,6 +317,16 @@ body::-webkit-scrollbar {
   flex: 1;
 }
 
+.resource-selector-block {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--pf-t--global--border--radius--lg, 16px);
+  background: rgba(244, 248, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 /* Replica control styling to match other number inputs */
 .replica-control {
   display: inline-flex;
@@ -338,21 +348,6 @@ body::-webkit-scrollbar {
 .replica-control .pf-v6-c-button:focus-visible {
   outline: 2px solid var(--pf-t--color--blue--40, #73bcf7);
   outline-offset: -2px;
-}
-
-#replicaInput {
-  width: 4.5rem;
-  text-align: center;
-  border: none;
-  box-shadow: none;
-  font-family: 'Red Hat Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-    monospace;
-  font-size: 1rem;
-}
-
-#replicaInput:focus-visible {
-  outline: none;
-  box-shadow: none;
 }
 
 .control-description {

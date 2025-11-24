@@ -31,7 +31,7 @@ export default function Home() {
                 <div className="hero-grid">
                   <div className="hero-copy">
                     <p className="eyebrow">PatternFly YAML playground</p>
-                    <h1 className="pf-v6-c-title pf-m-3xl">InferenceService manifest editor</h1>
+                    <h1 className="pf-v6-c-title pf-m-3xl">LLM | InferenceService manifest editor</h1>
                     <p className="pf-v6-c-content--p pf-m-md">
                       Use the PatternFly code editor component to explore LLM|InferenceService YAML manifests.
                     </p>
@@ -55,46 +55,179 @@ export default function Home() {
                           </option>
                         </select>
                       </div>
-                      <div className="control-line">
-                        <label htmlFor="replicaInput" className="control-line__label">
-                          Replicas:
-                        </label>
-                        <div className="pf-v6-c-number-input replica-control control-line__field">
-                          <button
-                            className="pf-v6-c-button pf-m-control pf-m-icon"
-                            type="button"
-                            aria-label="Minus"
-                            data-replica-control="decrement"
-                          >
-                            <span className="pf-v6-c-button__icon" aria-hidden="true">
-                              <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
-                                <path d="M416 208H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h384c17.7 0 32-14.3 32-32s-14.3-32-32-32z" />
-                              </svg>
-                            </span>
-                          </button>
-                          <div className="pf-v6-c-number-input__field">
-                            <input
-                              className="pf-v6-c-form-control"
-                              type="number"
-                              id="replicaInput"
-                              min="1"
-                              step="1"
-                              defaultValue="1"
-                              aria-label="Replica count"
-                            />
+                      <div className="resource-selector-block">
+                        <div id="llmResourceControls" hidden>
+                          <div className="control-line">
+                            <label htmlFor="cpuInput" className="control-line__label">
+                              CPU (n):
+                            </label>
+                            <div className="pf-v6-c-number-input replica-control control-line__field">
+                              <button
+                                className="pf-v6-c-button pf-m-control pf-m-icon"
+                                type="button"
+                                aria-label="Decrease CPU"
+                                data-resource-control="decrement"
+                                data-resource="cpu"
+                              >
+                                <span className="pf-v6-c-button__icon" aria-hidden="true">
+                                  <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
+                                    <path d="M416 208H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h384c17.7 0 32-14.3 32-32s-14.3-32-32-32z" />
+                                  </svg>
+                                </span>
+                              </button>
+                              <div className="pf-v6-c-number-input__field">
+                                <input
+                                  className="pf-v6-c-form-control"
+                                  type="number"
+                                  step="0.1"
+                                  min="0.1"
+                                  id="cpuInput"
+                                  data-resource-input="cpu"
+                                />
+                              </div>
+                              <button
+                                className="pf-v6-c-button pf-m-control pf-m-icon"
+                                type="button"
+                                aria-label="Increase CPU"
+                                data-resource-control="increment"
+                                data-resource="cpu"
+                              >
+                                <span className="pf-v6-c-button__icon" aria-hidden="true">
+                                  <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
+                                    <path d="M432 256c0 17.7-14.3 32-32 32H256v144c0 17.7-14.3 32-32 32s-32-14.3-32-32V288H48c-17.7 0-32-14.3-32-32s14.3-32 32-32h144V80c0-17.7 14.3-32 32-32s32 14.3 32 32v144h144c17.7 0 32-14.3 32 32z" />
+                                  </svg>
+                                </span>
+                              </button>
+                            </div>
                           </div>
-                          <button
-                            className="pf-v6-c-button pf-m-control pf-m-icon"
-                            type="button"
-                            aria-label="Plus"
-                            data-replica-control="increment"
-                          >
-                            <span className="pf-v6-c-button__icon" aria-hidden="true">
-                              <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
-                                <path d="M432 256c0 17.7-14.3 32-32 32H256v144c0 17.7-14.3 32-32 32s-32-14.3-32-32V288H48c-17.7 0-32-14.3-32-32s14.3-32 32-32h144V80c0-17.7 14.3-32 32-32s32 14.3 32 32v144h144c17.7 0 32 14.3 32 32z" />
-                              </svg>
-                            </span>
-                          </button>
+                          <div className="control-line">
+                            <label htmlFor="memoryInput" className="control-line__label">
+                              Memory (Gi):
+                            </label>
+                            <div className="pf-v6-c-number-input replica-control control-line__field">
+                              <button
+                                className="pf-v6-c-button pf-m-control pf-m-icon"
+                                type="button"
+                                aria-label="Decrease memory"
+                                data-resource-control="decrement"
+                                data-resource="memory"
+                              >
+                                <span className="pf-v6-c-button__icon" aria-hidden="true">
+                                  <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
+                                    <path d="M416 208H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h384c17.7 0 32-14.3 32-32s-14.3-32-32-32z" />
+                                  </svg>
+                                </span>
+                              </button>
+                              <div className="pf-v6-c-number-input__field">
+                                <input
+                                  className="pf-v6-c-form-control"
+                                  type="number"
+                                  step="1"
+                                  min="1"
+                                  id="memoryInput"
+                                  data-resource-input="memory"
+                                />
+                              </div>
+                              <button
+                                className="pf-v6-c-button pf-m-control pf-m-icon"
+                                type="button"
+                                aria-label="Increase memory"
+                                data-resource-control="increment"
+                                data-resource="memory"
+                              >
+                                <span className="pf-v6-c-button__icon" aria-hidden="true">
+                                  <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
+                                    <path d="M432 256c0 17.7-14.3 32-32 32H256v144c0 17.7-14.3 32-32 32s-32-14.3-32-32V288H48c-17.7 0-32-14.3-32-32s14.3-32 32-32h144V80c0-17.7 14.3-32 32-32s32 14.3 32 32v144h144c17.7 0 32-14.3 32 32z" />
+                                  </svg>
+                                </span>
+                              </button>
+                            </div>
+                          </div>
+                          <div className="control-line">
+                            <label htmlFor="gpuInput" className="control-line__label">
+                              GPU (count):
+                            </label>
+                            <div className="pf-v6-c-number-input replica-control control-line__field">
+                              <button
+                                className="pf-v6-c-button pf-m-control pf-m-icon"
+                                type="button"
+                                aria-label="Decrease GPU"
+                                data-resource-control="decrement"
+                                data-resource="gpu"
+                              >
+                                <span className="pf-v6-c-button__icon" aria-hidden="true">
+                                  <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
+                                    <path d="M416 208H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h384c17.7 0 32-14.3 32-32s-14.3-32-32-32z" />
+                                  </svg>
+                                </span>
+                              </button>
+                              <div className="pf-v6-c-number-input__field">
+                                <input
+                                  className="pf-v6-c-form-control"
+                                  type="number"
+                                  step="1"
+                                  min="0"
+                                  id="gpuInput"
+                                  data-resource-input="gpu"
+                                />
+                              </div>
+                              <button
+                                className="pf-v6-c-button pf-m-control pf-m-icon"
+                                type="button"
+                                aria-label="Increase GPU"
+                                data-resource-control="increment"
+                                data-resource="gpu"
+                              >
+                                <span className="pf-v6-c-button__icon" aria-hidden="true">
+                                  <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
+                                    <path d="M432 256c0 17.7-14.3 32-32 32H256v144c0 17.7-14.3 32-32 32s-32-14.3-32-32V288H48c-17.7 0-32-14.3-32-32s14.3-32 32-32h144V80c0-17.7 14.3-32 32-32s32 14.3 32 32v144h144c17.7 0 32-14.3 32 32z" />
+                                  </svg>
+                                </span>
+                              </button>
+                            </div>
+                          </div>
+                          <div className="control-line">
+                            <label htmlFor="replicaInput" className="control-line__label">
+                              Replicas:
+                            </label>
+                            <div className="pf-v6-c-number-input replica-control control-line__field">
+                              <button
+                                className="pf-v6-c-button pf-m-control pf-m-icon"
+                                type="button"
+                                aria-label="Minus"
+                                data-replica-control="decrement"
+                              >
+                                <span className="pf-v6-c-button__icon" aria-hidden="true">
+                                  <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
+                                    <path d="M416 208H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h384c17.7 0 32-14.3 32-32s-14.3-32-32-32z" />
+                                  </svg>
+                                </span>
+                              </button>
+                              <div className="pf-v6-c-number-input__field">
+                                <input
+                                  className="pf-v6-c-form-control"
+                                  type="number"
+                                  id="replicaInput"
+                                  min="1"
+                                  step="1"
+                                  defaultValue="1"
+                                  aria-label="Replica count"
+                                />
+                              </div>
+                              <button
+                                className="pf-v6-c-button pf-m-control pf-m-icon"
+                                type="button"
+                                aria-label="Plus"
+                                data-replica-control="increment"
+                              >
+                                <span className="pf-v6-c-button__icon" aria-hidden="true">
+                                  <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
+                                    <path d="M432 256c0 17.7-14.3 32-32 32H256v144c0 17.7-14.3 32-32 32s-32-14.3-32-32V288H48c-17.7 0-32-14.3-32-32s14.3-32 32-32h144V80c0-17.7 14.3-32 32-32s32 14.3 32 32v144h144c17.7 0 32-14.3 32 32z" />
+                                  </svg>
+                                </span>
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <div className="control-line">
@@ -119,137 +252,6 @@ export default function Home() {
                             Select a model…
                           </option>
                         </select>
-                      </div>
-                      <div id="llmResourceControls" hidden>
-                        <div className="control-line">
-                          <label htmlFor="cpuInput" className="control-line__label">
-                            CPU (n):
-                          </label>
-                          <div className="pf-v6-c-number-input replica-control control-line__field">
-                            <button
-                              className="pf-v6-c-button pf-m-control pf-m-icon"
-                              type="button"
-                              aria-label="Decrease CPU"
-                              data-resource-control="decrement"
-                              data-resource="cpu"
-                            >
-                              <span className="pf-v6-c-button__icon" aria-hidden="true">
-                                <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
-                                  <path d="M416 208H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h384c17.7 0 32-14.3 32-32s-14.3-32-32-32z" />
-                                </svg>
-                              </span>
-                            </button>
-                            <div className="pf-v6-c-number-input__field">
-                              <input
-                                className="pf-v6-c-form-control"
-                                type="number"
-                                step="0.1"
-                                min="0.1"
-                                id="cpuInput"
-                                data-resource-input="cpu"
-                              />
-                            </div>
-                            <button
-                              className="pf-v6-c-button pf-m-control pf-m-icon"
-                              type="button"
-                              aria-label="Increase CPU"
-                              data-resource-control="increment"
-                              data-resource="cpu"
-                            >
-                              <span className="pf-v6-c-button__icon" aria-hidden="true">
-                                <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
-                                  <path d="M432 256c0 17.7-14.3 32-32 32H256v144c0 17.7-14.3 32-32 32s-32-14.3-32-32V288H48c-17.7 0-32-14.3-32-32s14.3-32 32-32h144V80c0-17.7 14.3-32 32-32s32 14.3 32 32v144h144c17.7 0 32 14.3 32 32z" />
-                                </svg>
-                              </span>
-                            </button>
-                          </div>
-                        </div>
-                        <div className="control-line">
-                          <label htmlFor="memoryInput" className="control-line__label">
-                            Memory (Gi):
-                          </label>
-                          <div className="pf-v6-c-number-input replica-control control-line__field">
-                            <button
-                              className="pf-v6-c-button pf-m-control pf-m-icon"
-                              type="button"
-                              aria-label="Decrease memory"
-                              data-resource-control="decrement"
-                              data-resource="memory"
-                            >
-                              <span className="pf-v6-c-button__icon" aria-hidden="true">
-                                <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
-                                  <path d="M416 208H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h384c17.7 0 32-14.3 32-32s-14.3-32-32-32z" />
-                                </svg>
-                              </span>
-                            </button>
-                            <div className="pf-v6-c-number-input__field">
-                              <input
-                                className="pf-v6-c-form-control"
-                                type="number"
-                                step="1"
-                                min="1"
-                                id="memoryInput"
-                                data-resource-input="memory"
-                              />
-                            </div>
-                            <button
-                              className="pf-v6-c-button pf-m-control pf-m-icon"
-                              type="button"
-                              aria-label="Increase memory"
-                              data-resource-control="increment"
-                              data-resource="memory"
-                            >
-                              <span className="pf-v6-c-button__icon" aria-hidden="true">
-                                <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
-                                  <path d="M432 256c0 17.7-14.3 32-32 32H256v144c0 17.7-14.3 32-32 32s-32-14.3-32-32V288H48c-17.7 0-32-14.3-32-32s14.3-32 32-32h144V80c0-17.7 14.3-32 32-32s32 14.3 32 32v144h144c17.7 0 32-14.3 32 32z" />
-                                </svg>
-                              </span>
-                            </button>
-                          </div>
-                        </div>
-                        <div className="control-line">
-                          <label htmlFor="gpuInput" className="control-line__label">
-                            GPU (count):
-                          </label>
-                          <div className="pf-v6-c-number-input replica-control control-line__field">
-                            <button
-                              className="pf-v6-c-button pf-m-control pf-m-icon"
-                              type="button"
-                              aria-label="Decrease GPU"
-                              data-resource-control="decrement"
-                              data-resource="gpu"
-                            >
-                              <span className="pf-v6-c-button__icon" aria-hidden="true">
-                                <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
-                                  <path d="M416 208H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h384c17.7 0 32-14.3 32-32s-14.3-32-32-32z" />
-                                </svg>
-                              </span>
-                            </button>
-                            <div className="pf-v6-c-number-input__field">
-                              <input
-                                className="pf-v6-c-form-control"
-                                type="number"
-                                step="1"
-                                min="0"
-                                id="gpuInput"
-                                data-resource-input="gpu"
-                              />
-                            </div>
-                            <button
-                              className="pf-v6-c-button pf-m-control pf-m-icon"
-                              type="button"
-                              aria-label="Increase GPU"
-                              data-resource-control="increment"
-                              data-resource="gpu"
-                            >
-                              <span className="pf-v6-c-button__icon" aria-hidden="true">
-                                <svg className="pf-v6-svg" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
-                                  <path d="M432 256c0 17.7-14.3 32-32 32H256v144c0 17.7-14.3 32-32 32s-32-14.3-32-32V288H48c-17.7 0-32-14.3-32-32s14.3-32 32-32h144V80c0-17.7 14.3-32 32-32s32 14.3 32 32v144h144c17.7 0 32-14.3 32 32z" />
-                                </svg>
-                              </span>
-                            </button>
-                          </div>
-                        </div>
                       </div>
                       <div className="tool-toggle" id="toolControl" hidden>
                         <span className="control-line__label">Enable Tool Calling:</span>
