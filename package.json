@@ -1,0 +1,17 @@
+{
+  "name": "patternfly-llmisvc-yaml-editor",
+  "version": "1.0.0",
+  "description": "PatternFly-based YAML editor demo for InferenceService resources",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "NODE_ENV=development node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@patternfly/patternfly": "^6.4.0",
+    "express": "^5.1.0"
+  }
+}
