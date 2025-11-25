@@ -11,15 +11,6 @@ export default function Home() {
       <Head>
         <title>PatternFly YAML Code Editor</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/@patternfly/patternfly@6.4.0/dist/css/patternfly.min.css"
-        />
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/@patternfly/patternfly@6.4.0/dist/css/patternfly-addons.css"
-        />
-        <link rel="stylesheet" href={`${assetPrefix}/styles.css`} />
       </Head>
       <Script
         src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs/loader.min.js"
