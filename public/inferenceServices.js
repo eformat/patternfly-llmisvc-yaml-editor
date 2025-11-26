@@ -43,6 +43,7 @@ kind: LLMInferenceService
 metadata:
   name: example
   annotations:
+    alpha.maas.opendatahub.io/tiers: '[]'
     openshift.io/display-name: example
     opendatahub.io/hardware-profile-name: small-gpu
     opendatahub.io/hardware-profile-namespace: redhat-ods-applications
