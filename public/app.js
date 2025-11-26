@@ -90,6 +90,17 @@ function setToolControlVisibility(isVisible) {
   updateToolRadios();
 }
 
+function setAuthControlVisibility(isVisible) {
+  if (elements.authControl) {
+    elements.authControl.hidden = !isVisible;
+    elements.authControl.style.display = isVisible ? '' : 'none';
+  }
+  if (!isVisible) {
+    state.authEnabled = false;
+  }
+  updateAuthRadios();
+}
+
 function updateResourceInputs(type) {
   if (!elements.resourceInputs?.length) {
     return;
@@ -124,6 +135,20 @@ function updateToolRadios() {
       radio.checked = state.toolCallingEnabled;
     } else if (radio.value === 'off') {
       radio.checked = !state.toolCallingEnabled;
+    }
+    radio.disabled = !state.isLLMActive;
+  });
+}
+
+function updateAuthRadios() {
+  if (!elements.authRadios?.length) {
+    return;
+  }
+  elements.authRadios.forEach((radio) => {
+    if (radio.value === 'on') {
+      radio.checked = state.authEnabled;
+    } else if (radio.value === 'off') {
+      radio.checked = !state.authEnabled;
     }
     radio.disabled = !state.isLLMActive;
   });
@@ -251,6 +276,8 @@ const elements = {
   resourceControls: document.querySelectorAll('[data-resource-control]'),
   toolControl: document.getElementById('toolControl'),
   toolRadios: document.querySelectorAll('input[name="toolCalling"]'),
+  authControl: document.getElementById('authControl'),
+  authRadios: document.querySelectorAll('input[name="authEnabled"]'),
   editorHost: document.getElementById('editor'),
   copyButton: document.getElementById('copyButton'),
   copyStatus: document.getElementById('copyStatus'),
@@ -269,6 +296,7 @@ const INSTANCE_LABEL = 'app.kubernetes.io/instance';
 const NAME_LABEL = 'app.kubernetes.io/name';
 const TOOL_ARGS_ENV = 'VLLM_ADDITIONAL_ARGS';
 const LLM_ROUTER_KEYS = ['route', 'gateway', 'scheduler'];
+const AUTH_ANNOTATION = 'security.opendatahub.io/enable-auth';
 const LLM_RESOURCE_DEFAULTS = Object.freeze({ cpu: 1, memory: 8, gpu: 1 });
 const RESOURCE_FIELDS = {
   cpu: { resourceKey: 'cpu', unit: '', min: 0.1, step: 0.1, decimals: 1 },
@@ -286,7 +314,8 @@ const state = {
   isLLMActive: false,
   modelSelection: '',
   resources: { ...LLM_RESOURCE_DEFAULTS },
-  toolCallingEnabled: false
+  toolCallingEnabled: false,
+  authEnabled: false
 };
 
 let resolveEditorReady;
@@ -394,6 +423,7 @@ function setActiveService(id) {
   setModelControlVisibility(state.isLLMActive);
   setResourceControlVisibility(state.isLLMActive);
   setToolControlVisibility(state.isLLMActive);
+  setAuthControlVisibility(state.isLLMActive);
   const replicas = extractReplicaCount(svc.yaml ?? '');
   state.replicaCount = replicas;
   if (elements.replicaInput) {
@@ -422,6 +452,7 @@ function setActiveService(id) {
   syncModelSelectionFromYaml(activeYaml, state.isLLMActive);
   syncResourceStateFromYaml(activeYaml, state.isLLMActive);
   syncToolCallingFromYaml(activeYaml, state.isLLMActive);
+  syncAuthEnabledFromYaml(activeYaml, state.isLLMActive);
 }
 
 async function handleCopy() {
@@ -716,6 +747,17 @@ function syncToolCallingFromYaml(yamlContent, isLLM) {
   updateToolRadios();
 }
 
+function syncAuthEnabledFromYaml(yamlContent, isLLM) {
+  if (!isLLM) {
+    state.authEnabled = false;
+    updateAuthRadios();
+    return;
+  }
+  const enabled = getAuthAnnotationFromYaml(yamlContent);
+  state.authEnabled = Boolean(enabled);
+  updateAuthRadios();
+}
+
 function sanitizeResourceName(value) {
   const trimmed = typeof value === 'string' ? value.trim() : '';
   return trimmed || 'example';
@@ -770,6 +812,28 @@ function applyResourceName(newValue, { skipEditorUpdate = false } = {}) {
     updateEditorHeight();
   }
   updateEditorTitle();
+}
+
+function setAuthAnnotationValue(doc, enabled) {
+  const metadata = ensureNestedObject(doc, 'metadata');
+  const annotations = ensureNestedObject(metadata, 'annotations');
+  annotations[AUTH_ANNOTATION] = enabled ? 'true' : 'false';
+}
+
+function getAuthAnnotationFromYaml(yamlContent) {
+  const doc = parseYamlDocument(yamlContent);
+  if (!doc) {
+    return undefined;
+  }
+  const annotations = doc?.metadata?.annotations;
+  const rawValue = annotations?.[AUTH_ANNOTATION];
+  if (typeof rawValue === 'boolean') {
+    return rawValue;
+  }
+  if (typeof rawValue === 'string') {
+    return rawValue.trim().toLowerCase() === 'true';
+  }
+  return undefined;
 }
 
 function extractReplicaCount(yaml) {
@@ -907,6 +971,26 @@ function handleToolToggle(event) {
   applyToolCalling(event.target.value === 'on');
 }
 
+function applyAuthEnabled(enabled, { skipEditorUpdate = false } = {}) {
+  state.authEnabled = Boolean(enabled);
+  updateAuthRadios();
+  if (skipEditorUpdate || !state.editor || !state.isLLMActive) {
+    return;
+  }
+  const currentValue = state.editor.getValue();
+  const updated = updateYamlDocument(currentValue, (doc) => {
+    setAuthAnnotationValue(doc, state.authEnabled);
+  });
+  if (updated !== currentValue) {
+    state.editor.setValue(updated.trimEnd() + '\n');
+    updateEditorHeight();
+  }
+}
+
+function handleAuthToggle(event) {
+  applyAuthEnabled(event.target.value === 'on');
+}
+
 function setShortcutsVisibility(shouldShow) {
   if (!elements.shortcutsPanel || !elements.shortcutsToggle) {
     return;
@@ -950,6 +1034,12 @@ if (elements.resourceControls?.length) {
 if (elements.toolRadios?.length) {
   elements.toolRadios.forEach((radio) => {
     radio.addEventListener('change', handleToolToggle);
+  });
+}
+
+if (elements.authRadios?.length) {
+  elements.authRadios.forEach((radio) => {
+    radio.addEventListener('change', handleAuthToggle);
   });
 }
 

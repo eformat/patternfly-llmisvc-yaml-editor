@@ -259,6 +259,16 @@ export default function Home() {
                           <span>Off</span>
                         </label>
                       </div>
+                      <div className="tool-toggle" id="authControl" hidden>
+                        <span className="control-line__label">Enable Auth:</span>
+                        <label className="tool-toggle__option">
+                          <input type="radio" name="authEnabled" value="on" /> <span>On</span>
+                        </label>
+                        <label className="tool-toggle__option">
+                          <input type="radio" name="authEnabled" value="off" defaultChecked />{' '}
+                          <span>Off</span>
+                        </label>
+                      </div>
                       <p className="control-description" id="modelDescription" hidden>
                         Applies the selected model’s <code>spec.model</code> settings for <code>LLMInferenceService</code>.
                       </p>
