@@ -1,6 +1,7 @@
 import { parse as parseYaml, stringify as stringifyYaml } from 'https://cdn.jsdelivr.net/npm/yaml@2.5.1/+esm';
 import { MODEL_OPTIONS } from './modelOptions.js';
 import { INFERENCE_SERVICES } from './inferenceServices.js';
+import { AUTH_OPTIONS } from './authOptions.js';
 
 function isLLMKind(kind) {
   return typeof kind === 'string' && kind.toLowerCase().includes('llminferenceservice');
@@ -297,6 +298,8 @@ const NAME_LABEL = 'app.kubernetes.io/name';
 const TOOL_ARGS_ENV = 'VLLM_ADDITIONAL_ARGS';
 const LLM_ROUTER_KEYS = ['route', 'gateway', 'scheduler'];
 const AUTH_ANNOTATION = 'security.opendatahub.io/enable-auth';
+const AUTH_SECTION_START = '# AUTH-RESOURCES-START';
+const AUTH_SECTION_END = '# AUTH-RESOURCES-END';
 const LLM_RESOURCE_DEFAULTS = Object.freeze({ cpu: 1, memory: 8, gpu: 1 });
 const RESOURCE_FIELDS = {
   cpu: { resourceKey: 'cpu', unit: '', min: 0.1, step: 0.1, decimals: 1 },
@@ -507,13 +510,15 @@ const SPEC_LINE_REGEX = /^spec:\s*$/m;
 const KIND_LINE_REGEX = /^kind:\s*(.+)$/m;
 const YAML_DUMP_OPTIONS = { lineWidth: 120, noRefs: true };
 
-function parseYamlDocument(yamlContent) {
+function parseYamlDocument(yamlContent, { skipSplit = false } = {}) {
   if (!HAS_YAML) {
     console.warn('YAML parser is not available; metadata editing is disabled.');
     return null;
   }
   try {
-    const doc = parseYaml(yamlContent);
+    const targetContent = skipSplit ? yamlContent ?? '' : splitAuthSection(yamlContent ?? '').base;
+    const normalized = targetContent || '{}';
+    const doc = parseYaml(normalized);
     return typeof doc === 'object' && doc !== null ? doc : {};
   } catch (error) {
     console.warn('Unable to parse YAML content', error);
@@ -534,13 +539,17 @@ function serializeYamlDocument(doc) {
 }
 
 function updateYamlDocument(yamlContent, mutator) {
-  const doc = parseYamlDocument(yamlContent);
+  const { base, authSection } = splitAuthSection(yamlContent ?? '');
+  const doc = parseYamlDocument(base, { skipSplit: true });
   if (!doc) {
-    return yamlContent;
+    return yamlContent ?? '';
   }
   mutator(doc);
   const output = serializeYamlDocument(doc);
-  return output ?? yamlContent;
+  if (!output) {
+    return combineYamlWithAuth(base, authSection);
+  }
+  return combineYamlWithAuth(output, authSection);
 }
 
 function ensureNestedObject(target, key) {
@@ -552,6 +561,58 @@ function ensureNestedObject(target, key) {
 
 function getDefaultResourceState() {
   return { ...LLM_RESOURCE_DEFAULTS };
+}
+
+function escapeForRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function splitAuthSection(yamlContent = '') {
+  const content = typeof yamlContent === 'string' ? yamlContent : '';
+  const escapedStart = escapeForRegex(AUTH_SECTION_START);
+  const escapedEnd = escapeForRegex(AUTH_SECTION_END);
+  const regex = new RegExp(`(?:^|\\n)${escapedStart}[\\s\\S]*?${escapedEnd}\\s*`, 'm');
+  const match = content.match(regex);
+  if (!match) {
+    return { base: content, authSection: '' };
+  }
+  const authSection = match[0].trim();
+  const base = content.replace(regex, '').trimEnd();
+  return { base: base ? `${base}\n` : '', authSection };
+}
+
+function combineYamlWithAuth(baseContent, authSection) {
+  const trimmedBase = (baseContent ?? '').trimEnd();
+  if (!authSection) {
+    return trimmedBase ? `${trimmedBase}\n` : '';
+  }
+  const trimmedAuth = authSection.trim();
+  const separator = trimmedBase ? '\n\n' : '';
+  return `${trimmedBase}${separator}${trimmedAuth}\n`;
+}
+
+function buildAuthSection(resourceName) {
+  const template = AUTH_OPTIONS[0]?.yaml;
+  if (!template) {
+    return '';
+  }
+  const safeName = sanitizeResourceName(resourceName) ?? 'example';
+  const replaced = template.replace(/example/g, safeName);
+  return `${AUTH_SECTION_START}\n${replaced.trim()}\n${AUTH_SECTION_END}`;
+}
+
+function appendAuthSection(yamlContent, resourceName) {
+  const { base } = splitAuthSection(yamlContent);
+  const section = buildAuthSection(resourceName);
+  if (!section) {
+    return combineYamlWithAuth(base, '');
+  }
+  return combineYamlWithAuth(base, section);
+}
+
+function removeAuthSection(yamlContent) {
+  const { base } = splitAuthSection(yamlContent);
+  return combineYamlWithAuth(base, '');
 }
 
 function formatResourceQuantity(type, value) {
@@ -811,6 +872,13 @@ function applyResourceName(newValue, { skipEditorUpdate = false } = {}) {
     state.editor.setValue(updated.trimEnd() + '\n');
     updateEditorHeight();
   }
+  if (state.authEnabled && state.isLLMActive && state.editor) {
+    const withAuth = appendAuthSection(state.editor.getValue(), state.resourceName);
+    if (withAuth.trimEnd() !== state.editor.getValue().trimEnd()) {
+      state.editor.setValue(withAuth.trimEnd() + '\n');
+      updateEditorHeight();
+    }
+  }
   updateEditorTitle();
 }
 
@@ -876,8 +944,10 @@ function applyReplicaCount(newValue) {
     elements.replicaInput.value = String(sanitized);
   }
   if (state.editor) {
-    const updated = ensureReplicaCount(state.editor.getValue(), sanitized);
-    state.editor.setValue(updated.trimEnd() + '\n');
+    const { base, authSection } = splitAuthSection(state.editor.getValue());
+    const updatedBase = ensureReplicaCount(base, sanitized);
+    const merged = combineYamlWithAuth(updatedBase, authSection);
+    state.editor.setValue(merged.trimEnd() + '\n');
     updateEditorHeight();
   }
 }
@@ -978,13 +1048,17 @@ function applyAuthEnabled(enabled, { skipEditorUpdate = false } = {}) {
     return;
   }
   const currentValue = state.editor.getValue();
-  const updated = updateYamlDocument(currentValue, (doc) => {
+  const annotated = updateYamlDocument(currentValue, (doc) => {
     setAuthAnnotationValue(doc, state.authEnabled);
   });
-  if (updated !== currentValue) {
-    state.editor.setValue(updated.trimEnd() + '\n');
-    updateEditorHeight();
+  let nextValue;
+  if (state.authEnabled) {
+    nextValue = appendAuthSection(annotated, state.resourceName);
+  } else {
+    nextValue = removeAuthSection(annotated);
   }
+  state.editor.setValue(nextValue.trimEnd() + '\n');
+  updateEditorHeight();
 }
 
 function handleAuthToggle(event) {
