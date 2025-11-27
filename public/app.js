@@ -102,6 +102,17 @@ function setAuthControlVisibility(isVisible) {
   updateAuthRadios();
 }
 
+function setSmartSchedulingControlVisibility(isVisible) {
+  if (elements.smartSchedulingControl) {
+    elements.smartSchedulingControl.hidden = !isVisible;
+    elements.smartSchedulingControl.style.display = isVisible ? '' : 'none';
+  }
+  if (!isVisible) {
+    state.smartSchedulingEnabled = false;
+  }
+  updateSmartSchedulingRadios();
+}
+
 function updateResourceInputs(type) {
   if (!elements.resourceInputs?.length) {
     return;
@@ -150,6 +161,20 @@ function updateAuthRadios() {
       radio.checked = state.authEnabled;
     } else if (radio.value === 'off') {
       radio.checked = !state.authEnabled;
+    }
+    radio.disabled = !state.isLLMActive;
+  });
+}
+
+function updateSmartSchedulingRadios() {
+  if (!elements.smartSchedulingRadios?.length) {
+    return;
+  }
+  elements.smartSchedulingRadios.forEach((radio) => {
+    if (radio.value === 'on') {
+      radio.checked = state.smartSchedulingEnabled;
+    } else if (radio.value === 'off') {
+      radio.checked = !state.smartSchedulingEnabled;
     }
     radio.disabled = !state.isLLMActive;
   });
@@ -279,6 +304,8 @@ const elements = {
   toolRadios: document.querySelectorAll('input[name="toolCalling"]'),
   authControl: document.getElementById('authControl'),
   authRadios: document.querySelectorAll('input[name="authEnabled"]'),
+  smartSchedulingControl: document.getElementById('smartSchedulingControl'),
+  smartSchedulingRadios: document.querySelectorAll('input[name="smartScheduling"]'),
   editorHost: document.getElementById('editor'),
   copyButton: document.getElementById('copyButton'),
   copyStatus: document.getElementById('copyStatus'),
@@ -296,7 +323,7 @@ const DISPLAY_NAME_ANNOTATION = 'openshift.io/display-name';
 const INSTANCE_LABEL = 'app.kubernetes.io/instance';
 const NAME_LABEL = 'app.kubernetes.io/name';
 const TOOL_ARGS_ENV = 'VLLM_ADDITIONAL_ARGS';
-const LLM_ROUTER_KEYS = ['route', 'gateway', 'scheduler'];
+const LLM_ROUTER_BASE_KEYS = ['route', 'gateway'];
 const AUTH_ANNOTATION = 'security.opendatahub.io/enable-auth';
 const AUTH_SECTION_START = '# AUTH-RESOURCES-START';
 const AUTH_SECTION_END = '# AUTH-RESOURCES-END';
@@ -318,7 +345,8 @@ const state = {
   modelSelection: '',
   resources: { ...LLM_RESOURCE_DEFAULTS },
   toolCallingEnabled: false,
-  authEnabled: false
+  authEnabled: false,
+  smartSchedulingEnabled: false
 };
 
 let resolveEditorReady;
@@ -423,10 +451,17 @@ function setActiveService(id) {
   const displayKind = svc.kind ?? extractKindFromYaml(svc.yaml ?? '') ?? 'InferenceService';
   state.resourceKind = displayKind;
   state.isLLMActive = isLLMKind(displayKind);
+  if (state.isLLMActive) {
+    const initialDoc = parseYamlDocument(svc.yaml ?? '', { skipSplit: true });
+    state.smartSchedulingEnabled = isSchedulerEnabled(initialDoc);
+  } else {
+    state.smartSchedulingEnabled = false;
+  }
   setModelControlVisibility(state.isLLMActive);
   setResourceControlVisibility(state.isLLMActive);
   setToolControlVisibility(state.isLLMActive);
   setAuthControlVisibility(state.isLLMActive);
+  setSmartSchedulingControlVisibility(state.isLLMActive);
   const replicas = extractReplicaCount(svc.yaml ?? '');
   state.replicaCount = replicas;
   if (elements.replicaInput) {
@@ -456,6 +491,7 @@ function setActiveService(id) {
   syncResourceStateFromYaml(activeYaml, state.isLLMActive);
   syncToolCallingFromYaml(activeYaml, state.isLLMActive);
   syncAuthEnabledFromYaml(activeYaml, state.isLLMActive);
+  syncSmartSchedulingFromYaml(activeYaml, state.isLLMActive);
 }
 
 async function handleCopy() {
@@ -647,13 +683,22 @@ function parseResourceQuantity(type, value) {
   return Math.max(def.min, parsed);
 }
 
-function ensureLLMRouterStructure(spec) {
+function ensureLLMRouterStructure(spec, { includeScheduler } = {}) {
   const router = ensureNestedObject(spec, 'router');
-  LLM_ROUTER_KEYS.forEach((key) => {
+  LLM_ROUTER_BASE_KEYS.forEach((key) => {
     if (!router[key] || typeof router[key] !== 'object') {
       router[key] = {};
     }
   });
+  const shouldIncludeScheduler =
+    includeScheduler !== undefined ? includeScheduler : state.smartSchedulingEnabled;
+  if (shouldIncludeScheduler) {
+    if (!router.scheduler || typeof router.scheduler !== 'object') {
+      router.scheduler = {};
+    }
+  } else if (router.scheduler) {
+    delete router.scheduler;
+  }
   return router;
 }
 
@@ -819,6 +864,17 @@ function syncAuthEnabledFromYaml(yamlContent, isLLM) {
   updateAuthRadios();
 }
 
+function syncSmartSchedulingFromYaml(yamlContent, isLLM) {
+  if (!isLLM) {
+    state.smartSchedulingEnabled = false;
+    updateSmartSchedulingRadios();
+    return;
+  }
+  const doc = parseYamlDocument(yamlContent);
+  state.smartSchedulingEnabled = isSchedulerEnabled(doc);
+  updateSmartSchedulingRadios();
+}
+
 function sanitizeResourceName(value) {
   const trimmed = typeof value === 'string' ? value.trim() : '';
   return trimmed || 'example';
@@ -902,6 +958,20 @@ function getAuthAnnotationFromYaml(yamlContent) {
     return rawValue.trim().toLowerCase() === 'true';
   }
   return undefined;
+}
+
+function isSchedulerEnabled(doc) {
+  return Boolean(doc?.spec?.router?.scheduler);
+}
+
+function setSchedulerValue(doc, enabled) {
+  const spec = ensureNestedObject(doc, 'spec');
+  const router = ensureLLMRouterStructure(spec, { includeScheduler: enabled });
+  if (!enabled && router && Object.prototype.hasOwnProperty.call(router, 'scheduler')) {
+    delete router.scheduler;
+  } else if (enabled) {
+    router.scheduler = router.scheduler && typeof router.scheduler === 'object' ? router.scheduler : {};
+  }
 }
 
 function extractReplicaCount(yaml) {
@@ -1065,6 +1135,26 @@ function handleAuthToggle(event) {
   applyAuthEnabled(event.target.value === 'on');
 }
 
+function applySmartScheduling(enabled, { skipEditorUpdate = false } = {}) {
+  state.smartSchedulingEnabled = Boolean(enabled);
+  updateSmartSchedulingRadios();
+  if (skipEditorUpdate || !state.editor || !state.isLLMActive) {
+    return;
+  }
+  const currentValue = state.editor.getValue();
+  const updated = updateYamlDocument(currentValue, (doc) => {
+    setSchedulerValue(doc, state.smartSchedulingEnabled);
+  });
+  if (updated !== currentValue) {
+    state.editor.setValue(updated.trimEnd() + '\n');
+    updateEditorHeight();
+  }
+}
+
+function handleSmartSchedulingToggle(event) {
+  applySmartScheduling(event.target.value === 'on');
+}
+
 function setShortcutsVisibility(shouldShow) {
   if (!elements.shortcutsPanel || !elements.shortcutsToggle) {
     return;
@@ -1114,6 +1204,12 @@ if (elements.toolRadios?.length) {
 if (elements.authRadios?.length) {
   elements.authRadios.forEach((radio) => {
     radio.addEventListener('change', handleAuthToggle);
+  });
+}
+
+if (elements.smartSchedulingRadios?.length) {
+  elements.smartSchedulingRadios.forEach((radio) => {
+    radio.addEventListener('change', handleSmartSchedulingToggle);
   });
 }
 
