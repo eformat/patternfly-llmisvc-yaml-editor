@@ -279,6 +279,16 @@ export default function Home() {
                           <span>Off</span>
                         </label>
                       </div>
+                      <div className="tool-toggle" id="maasControl" hidden>
+                        <span className="control-line__label">MaaS:</span>
+                        <label className="tool-toggle__option">
+                          <input type="radio" name="maasEnabled" value="on" /> <span>On</span>
+                        </label>
+                        <label className="tool-toggle__option">
+                          <input type="radio" name="maasEnabled" value="off" defaultChecked />{' '}
+                          <span>Off</span>
+                        </label>
+                      </div>
                       <p className="control-description" id="modelDescription" hidden>
                         Applies the selected model’s <code>spec.model</code> settings for <code>LLMInferenceService</code>.
                       </p>

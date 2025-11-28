@@ -113,6 +113,17 @@ function setSmartSchedulingControlVisibility(isVisible) {
   updateSmartSchedulingRadios();
 }
 
+function setMaaSControlVisibility(isVisible) {
+  if (elements.maasControl) {
+    elements.maasControl.hidden = !isVisible;
+    elements.maasControl.style.display = isVisible ? '' : 'none';
+  }
+  if (!isVisible) {
+    state.maasEnabled = false;
+  }
+  updateMaaSRadios();
+}
+
 function updateResourceInputs(type) {
   if (!elements.resourceInputs?.length) {
     return;
@@ -175,6 +186,20 @@ function updateSmartSchedulingRadios() {
       radio.checked = state.smartSchedulingEnabled;
     } else if (radio.value === 'off') {
       radio.checked = !state.smartSchedulingEnabled;
+    }
+    radio.disabled = !state.isLLMActive;
+  });
+}
+
+function updateMaaSRadios() {
+  if (!elements.maasRadios?.length) {
+    return;
+  }
+  elements.maasRadios.forEach((radio) => {
+    if (radio.value === 'on') {
+      radio.checked = state.maasEnabled;
+    } else if (radio.value === 'off') {
+      radio.checked = !state.maasEnabled;
     }
     radio.disabled = !state.isLLMActive;
   });
@@ -306,6 +331,8 @@ const elements = {
   authRadios: document.querySelectorAll('input[name="authEnabled"]'),
   smartSchedulingControl: document.getElementById('smartSchedulingControl'),
   smartSchedulingRadios: document.querySelectorAll('input[name="smartScheduling"]'),
+  maasControl: document.getElementById('maasControl'),
+  maasRadios: document.querySelectorAll('input[name="maasEnabled"]'),
   editorHost: document.getElementById('editor'),
   copyButton: document.getElementById('copyButton'),
   copyStatus: document.getElementById('copyStatus'),
@@ -346,7 +373,8 @@ const state = {
   resources: { ...LLM_RESOURCE_DEFAULTS },
   toolCallingEnabled: false,
   authEnabled: false,
-  smartSchedulingEnabled: false
+  smartSchedulingEnabled: false,
+  maasEnabled: false
 };
 
 let resolveEditorReady;
@@ -454,14 +482,17 @@ function setActiveService(id) {
   if (state.isLLMActive) {
     const initialDoc = parseYamlDocument(svc.yaml ?? '', { skipSplit: true });
     state.smartSchedulingEnabled = isSchedulerEnabled(initialDoc);
+    state.maasEnabled = isMaaSEnabled(initialDoc);
   } else {
     state.smartSchedulingEnabled = false;
+    state.maasEnabled = false;
   }
   setModelControlVisibility(state.isLLMActive);
   setResourceControlVisibility(state.isLLMActive);
   setToolControlVisibility(state.isLLMActive);
   setAuthControlVisibility(state.isLLMActive);
   setSmartSchedulingControlVisibility(state.isLLMActive);
+  setMaaSControlVisibility(state.isLLMActive);
   const replicas = extractReplicaCount(svc.yaml ?? '');
   state.replicaCount = replicas;
   if (elements.replicaInput) {
@@ -492,6 +523,7 @@ function setActiveService(id) {
   syncToolCallingFromYaml(activeYaml, state.isLLMActive);
   syncAuthEnabledFromYaml(activeYaml, state.isLLMActive);
   syncSmartSchedulingFromYaml(activeYaml, state.isLLMActive);
+  syncMaaSFromYaml(activeYaml, state.isLLMActive);
 }
 
 async function handleCopy() {
@@ -875,6 +907,17 @@ function syncSmartSchedulingFromYaml(yamlContent, isLLM) {
   updateSmartSchedulingRadios();
 }
 
+function syncMaaSFromYaml(yamlContent, isLLM) {
+  if (!isLLM) {
+    state.maasEnabled = false;
+    updateMaaSRadios();
+    return;
+  }
+  const doc = parseYamlDocument(yamlContent);
+  state.maasEnabled = isMaaSEnabled(doc);
+  updateMaaSRadios();
+}
+
 function sanitizeResourceName(value) {
   const trimmed = typeof value === 'string' ? value.trim() : '';
   return trimmed || 'example';
@@ -971,6 +1014,31 @@ function setSchedulerValue(doc, enabled) {
     delete router.scheduler;
   } else if (enabled) {
     router.scheduler = router.scheduler && typeof router.scheduler === 'object' ? router.scheduler : {};
+  }
+}
+
+function isMaaSEnabled(doc) {
+  if (!doc?.spec?.router?.gateway) {
+    return false;
+  }
+  const refs = doc.spec.router.gateway.refs;
+  if (!Array.isArray(refs)) {
+    return false;
+  }
+  return refs.some(
+    (ref) => ref?.name === 'maas-default-gateway' && ref?.namespace === 'openshift-ingress'
+  );
+}
+
+function setMaaSGatewayValue(doc, enabled) {
+  const spec = ensureNestedObject(doc, 'spec');
+  const router = ensureLLMRouterStructure(spec);
+  if (enabled) {
+    router.gateway = {
+      refs: [{ name: 'maas-default-gateway', namespace: 'openshift-ingress' }]
+    };
+  } else {
+    router.gateway = {};
   }
 }
 
@@ -1155,6 +1223,26 @@ function handleSmartSchedulingToggle(event) {
   applySmartScheduling(event.target.value === 'on');
 }
 
+function applyMaaS(enabled, { skipEditorUpdate = false } = {}) {
+  state.maasEnabled = Boolean(enabled);
+  updateMaaSRadios();
+  if (skipEditorUpdate || !state.editor || !state.isLLMActive) {
+    return;
+  }
+  const currentValue = state.editor.getValue();
+  const updated = updateYamlDocument(currentValue, (doc) => {
+    setMaaSGatewayValue(doc, state.maasEnabled);
+  });
+  if (updated !== currentValue) {
+    state.editor.setValue(updated.trimEnd() + '\n');
+    updateEditorHeight();
+  }
+}
+
+function handleMaaSToggle(event) {
+  applyMaaS(event.target.value === 'on');
+}
+
 function setShortcutsVisibility(shouldShow) {
   if (!elements.shortcutsPanel || !elements.shortcutsToggle) {
     return;
@@ -1210,6 +1298,12 @@ if (elements.authRadios?.length) {
 if (elements.smartSchedulingRadios?.length) {
   elements.smartSchedulingRadios.forEach((radio) => {
     radio.addEventListener('change', handleSmartSchedulingToggle);
+  });
+}
+
+if (elements.maasRadios?.length) {
+  elements.maasRadios.forEach((radio) => {
+    radio.addEventListener('change', handleMaaSToggle);
   });
 }
 
