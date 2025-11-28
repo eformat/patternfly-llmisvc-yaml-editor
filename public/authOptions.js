@@ -11,7 +11,6 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: example-sa-example-sa
-  namespace: llama-serving
   annotations:
     kubernetes.io/service-account.name: "example-sa"
     openshift.io/display-name: example-sa
@@ -25,7 +24,6 @@ metadata:
   labels:
     opendatahub.io/dashboard: "true"
   name: example-view-role
-  namespace: llama-serving
 rules:
 - apiGroups:
   - serving.kserve.io
@@ -42,7 +40,6 @@ metadata:
   labels:
     opendatahub.io/dashboard: "true"
   name: example-view
-  namespace: llama-serving
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
