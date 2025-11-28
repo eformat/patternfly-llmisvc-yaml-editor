@@ -122,6 +122,7 @@ function setMaaSControlVisibility(isVisible) {
     state.maasEnabled = false;
   }
   updateMaaSRadios();
+  updateAuthRadios();
 }
 
 function updateResourceInputs(type) {
@@ -173,7 +174,13 @@ function updateAuthRadios() {
     } else if (radio.value === 'off') {
       radio.checked = !state.authEnabled;
     }
-    radio.disabled = !state.isLLMActive;
+    radio.disabled = !state.isLLMActive || state.maasEnabled;
+    if (radio.disabled && radio.value === 'on') {
+      radio.checked = false;
+    }
+    if (radio.disabled && radio.value === 'off') {
+      radio.checked = true;
+    }
   });
 }
 
@@ -1180,6 +1187,18 @@ function handleToolToggle(event) {
 }
 
 function applyAuthEnabled(enabled, { skipEditorUpdate = false } = {}) {
+  if (state.maasEnabled) {
+    if (state.authEnabled) {
+      state.authEnabled = false;
+      updateAuthRadios();
+      if (state.editor && state.isLLMActive) {
+        const withoutAuth = removeAuthSection(state.editor.getValue());
+        state.editor.setValue(withoutAuth.trimEnd() + '\n');
+        updateEditorHeight();
+      }
+    }
+    return;
+  }
   state.authEnabled = Boolean(enabled);
   updateAuthRadios();
   if (skipEditorUpdate || !state.editor || !state.isLLMActive) {
@@ -1226,6 +1245,10 @@ function handleSmartSchedulingToggle(event) {
 function applyMaaS(enabled, { skipEditorUpdate = false } = {}) {
   state.maasEnabled = Boolean(enabled);
   updateMaaSRadios();
+  if (state.maasEnabled && state.authEnabled) {
+    applyAuthEnabled(false, { skipEditorUpdate: true });
+  }
+  updateAuthRadios();
   if (skipEditorUpdate || !state.editor || !state.isLLMActive) {
     return;
   }
