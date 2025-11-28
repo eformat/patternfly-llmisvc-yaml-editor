@@ -359,6 +359,7 @@ const NAME_LABEL = 'app.kubernetes.io/name';
 const TOOL_ARGS_ENV = 'VLLM_ADDITIONAL_ARGS';
 const LLM_ROUTER_BASE_KEYS = ['route', 'gateway'];
 const AUTH_ANNOTATION = 'security.opendatahub.io/enable-auth';
+const MAAS_TIERS_ANNOTATION = 'alpha.maas.opendatahub.io/tiers';
 const AUTH_SECTION_START = '# AUTH-RESOURCES-START';
 const AUTH_SECTION_END = '# AUTH-RESOURCES-END';
 const LLM_RESOURCE_DEFAULTS = Object.freeze({ cpu: 1, memory: 8, gpu: 1 });
@@ -1025,16 +1026,14 @@ function setSchedulerValue(doc, enabled) {
 }
 
 function isMaaSEnabled(doc) {
-  if (!doc?.spec?.router?.gateway) {
-    return false;
-  }
-  const refs = doc.spec.router.gateway.refs;
-  if (!Array.isArray(refs)) {
-    return false;
-  }
-  return refs.some(
-    (ref) => ref?.name === 'maas-default-gateway' && ref?.namespace === 'openshift-ingress'
-  );
+  const refs = doc?.spec?.router?.gateway?.refs;
+  const hasGateway =
+    Array.isArray(refs) &&
+    refs.some((ref) => ref?.name === 'maas-default-gateway' && ref?.namespace === 'openshift-ingress');
+  const annotationValue = doc?.metadata?.annotations?.[MAAS_TIERS_ANNOTATION];
+  const hasAnnotation =
+    typeof annotationValue === 'string' && annotationValue.trim() === '[]';
+  return Boolean(hasGateway && hasAnnotation);
 }
 
 function setMaaSGatewayValue(doc, enabled) {
@@ -1046,6 +1045,13 @@ function setMaaSGatewayValue(doc, enabled) {
     };
   } else {
     router.gateway = {};
+  }
+  const metadata = ensureNestedObject(doc, 'metadata');
+  const annotations = ensureNestedObject(metadata, 'annotations');
+  if (enabled) {
+    annotations[MAAS_TIERS_ANNOTATION] = '[]';
+  } else if (annotations[MAAS_TIERS_ANNOTATION]) {
+    delete annotations[MAAS_TIERS_ANNOTATION];
   }
 }
 
