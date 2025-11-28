@@ -5,7 +5,7 @@ export const MODEL_OPTIONS = [
     label: 'Example (generic)',
     name: 'example',
     uri: 'oci://registry.redhat.io/example:latest',
-    additionalArgs: '',
+    additionalArgs: '--enable-auto-tool-choice --tool-call-parser=hermes',
     validated: false
   },
   {
